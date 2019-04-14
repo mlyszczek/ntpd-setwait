@@ -75,6 +75,7 @@ static int get_ts_from_ntp
     socklen_t         addrlen;  /* length of sockaddr in ai */
     fd_set            readfds;  /* list of sockets to monitor */
     struct timeval    tv;       /* sleep timeout for select() */
+    static int        errcnt;   /* getaddrinfo() error counter */
     unsigned char     packet[NTP_PACKET_LEN];  /* received packet from ntp */
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -99,7 +100,17 @@ static int get_ts_from_ntp
         /* faild to get address, might be that network is down
          */
 
-        perror("w/getaddrinfo(pool.ntp.org,123)");
+        if (errcnt-- == 0)
+        {
+            /* if there is no internet, this error will be popping
+             * out all the time, there is really no need to print
+             * it too frequent, so we print this once a while
+             */
+
+            errcnt = 60;
+            perror("w/getaddrinfo(pool.ntp.org,123)");
+        }
+
         return -1;
     }
 
