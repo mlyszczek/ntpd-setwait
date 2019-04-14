@@ -1,6 +1,7 @@
 SUBDIRS = www
 
-EXTRA_DIST = readme.md init.d/ntpd-setwait.conf init.d/ntpd-setwait.openrc
+EXTRA_DIST = readme.md init.d/ntpd-setwait.conf init.d/ntpd-setwait.openrc \
+	ntpd-setwait.1
 
 sysconf_DATA = init.d/ntpd-setwait.conf
 init_ddir = $(sysconfdir)/init.d
