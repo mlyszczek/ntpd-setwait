@@ -2,6 +2,28 @@
     Licensed under BSD 2clause license See LICENSE file for more information
     Author: Michał Łyszczek <michal.lyszczek@bofc.pl>
    ==========================================================================
+         -------------------------------------------------------------
+        / main ntpd-setwait program, it does the following:           \
+        |                                                             |
+        | * wait indefinitely for internet connection                 |
+        | * read current UTC time from ntp server                     |
+        | * if local and ntp time differance is bigger than           |
+        |   max-deviation - set system time with ntp time             |
+        | * start ntpd-bin program.                                   |
+        |                                                             |
+        | should any step fail, program will start from beginning     |
+        \ until ntpd-bin program is sucessfully executed.             /
+         -------------------------------------------------------------
+           \
+            \
+                .--.
+               |o_o |
+               |:_/ |
+              //   \ \
+             (|     | )
+            /'\_   _/`\
+            \___)=(___/
+   ==========================================================================
           _               __            __         ____ _  __
          (_)____   _____ / /__  __ ____/ /___     / __/(_)/ /___   _____
         / // __ \ / ___// // / / // __  // _ \   / /_ / // // _ \ / ___/
