@@ -1,0 +1,9 @@
+# in case when there is no configure script file (like when you clone from git)
+
+autoreconf -i
+
+# after that just do (or when you have downloaded source tarball)
+
+./configure
+make
+make install
