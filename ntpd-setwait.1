@@ -1,0 +1,89 @@
+.TH "ntpd-setwait" "1" "14 April 2019 (v0.1.0)" "bofc.pl"
+.SH NAME
+.PP
+.B ntpd-setwait
+- sets system time from ntp server before running ntpd daemon.
+.SH SYNOPSIS
+.PP
+.B ntpd-setwait
+.RB < -f | -d >
+.RB < max-deviation >
+.RB < ntpd-bin >
+.RB [< ntpd-opts >]
+.SH DESCRIPTION
+.PP
+.B ntpd-setwait
+is very simple program that will do the following:
+.PP
+* wait indefinitely for internet connection
+.br
+* read current UTC time from ntp server
+.br
+* if local and ntp time differance is bigger than
+.I max-deviation
+- set system time with ntp time
+.br
+* start
+.I ntpd-bin
+program.
+.PP
+If at any point there is an error, program goes back to start and tries again,
+until all steps succeed and
+.B ntpd-bin
+is executed.
+.B ntpd-bin
+is executed with
+.BR execve ()
+syscall, so after that
+.B ntpd-setwait
+cease to exist.
+.SH OPTIONS
+.PP
+.TP
+.B -f
+Run program in foreground - this may be usefull when you want to stop system
+boot until time is synchronized (pass proper option to your
+.B ntpd
+to make it go into background if you don't want to hang up your boot
+completely).
+Or you want to use external supervisor -
+remember
+.B ntpd
+pid will be the same as
+.B ntpd-setwait
+due to
+.BR execve ()
+function.
+.TP
+.B -d
+Fork program into background.
+This is usefull when you want time to be synchronized, but you don't really
+care if this happens now or after couple of hours when internet shows up.
+Just make sure your programs are resistant to immediate jump from past to
+the present.
+.TP
+.RB < max-deviation >
+Positional argument.
+At startup program will read ntp time and localtime.
+If local time is different than the one on the ntp server for more than
+.I max-deviation
+seconds,
+.B ntpd-setwait
+will set system time to time returned by ntp server.
+.TP
+.RB < ntpd-bin >
+Positional argument.
+Absolute path to
+.B ntpd
+binary you want to use.
+It's usually
+.BR /usr/sbin/ntpd .
+.TP
+.RB [< ntpd-opts >]
+Positional and optional argument.
+Options that should be passed to
+.I ntpd-bin
+executable.
+.SH "BUG REPORTING"
+.PP
+Please report all bugs to "Michał Łyszczek <michal.lyszczek@bofc.pl>"
