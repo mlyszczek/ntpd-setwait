@@ -1,7 +1,7 @@
 SUBDIRS = www
 
 EXTRA_DIST = readme.md init.d/ntpd-setwait.conf init.d/ntpd-setwait.openrc \
-	ntpd-setwait.1
+	ntpd-setwait.1 gen-download-page.sh man2html.sh
 
 sysconf_DATA = init.d/ntpd-setwait.conf
 init_ddir = $(sysconfdir)/init.d
