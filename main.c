@@ -448,9 +448,9 @@ int main
          * care, we start ntpd now and let it worry about that,
          * ntpd will sync us to valid time, nice and slow.
          *
-         * argv[2] contains path to ntpd to run
+         * argv[3] contains path to ntpd to run
          *
-         * &argv[2] contains name (argv[0]) for new process
+         * &argv[3] contains name (argv[0]) for new process
          * and after that are arguments for ntpd itself.
          */
 
