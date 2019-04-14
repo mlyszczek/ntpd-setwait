@@ -1,6 +1,10 @@
 ACLOCAL_AMFLAGS=-I m4
 
-EXTRA_DIST = readme.md
+EXTRA_DIST = readme.md init.d/ntpd-setwait.conf init.d/ntpd-setwait.openrc
+
+sysconf_DATA = init.d/ntpd-setwait.conf
+init_ddir = $(sysconfdir)/init.d
+dist_init_d_SCRIPTS = init.d/ntpd-setwait
 
 bin_PROGRAMS = ntpd-setwait
 ntpd_setwait_SOURCES = main.c daemonize.c daemonize.h

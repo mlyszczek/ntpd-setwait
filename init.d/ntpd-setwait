@@ -1,0 +1,165 @@
+#!/bin/sh
+## ==========================================================================
+#   Licensed under BSD 2clause license See LICENSE file for more information
+#   Author: Michał Łyszczek <michal.lyszczek@bofc.pl>
+## ==========================================================================
+
+###
+# some systems like solaris has alias on stop, remove those aliases so our
+# init script can work as expected
+#
+
+unalias stop  > /dev/null 2>&1
+unalias start > /dev/null 2>&1
+
+## ==========================================================================
+#                                                 ____ _  __
+#        _____ ____   __  __ _____ _____ ___     / __/(_)/ /___   _____
+#       / ___// __ \ / / / // ___// ___// _ \   / /_ / // // _ \ / ___/
+#      (__  )/ /_/ // /_/ // /   / /__ /  __/  / __// // //  __/(__  )
+#     /____/ \____/ \__,_//_/    \___/ \___/  /_/  /_//_/ \___//____/
+#
+## ==========================================================================
+
+
+. /usr/local/etc/kurload.conf
+
+
+## ==========================================================================
+#                    _                __
+#      ____   _____ (_)_   __ ____ _ / /_ ___     _   __ ____ _ _____ _____
+#     / __ \ / ___// /| | / // __ `// __// _ \   | | / // __ `// ___// ___/
+#    / /_/ // /   / / | |/ // /_/ // /_ /  __/   | |/ // /_/ // /   (__  )
+#   / .___//_/   /_/  |___/ \__,_/ \__/ \___/    |___/ \__,_//_/   /____/
+#  /_/
+## ==========================================================================
+
+
+MAX_DEVIATION=${MAX_DEVIATION:="300"}
+NTPD_BIN=${NTPD_BIN:="/usr/sbin/ntpd"}
+NTPD_OPTS=${NTPD_OPTS:=""}
+PID_FILE=${PID_FILE:="/var/run/ntpd.pid"}
+PROGRAM_LOG=${PROGRAM_LOG:="/var/log/ntpd-setwait.log"}
+
+command=/usr/local/bin/ntpd-setwait
+
+
+## ==========================================================================
+#                         __     __ _          ____
+#          ____   __  __ / /_   / /(_)_____   / __/__  __ ____   _____
+#         / __ \ / / / // __ \ / // // ___/  / /_ / / / // __ \ / ___/
+#        / /_/ // /_/ // /_/ // // // /__   / __// /_/ // / / /(__  )
+#       / .___/ \__,_//_.___//_//_/ \___/  /_/   \__,_//_/ /_//____/
+#      /_/
+## ==========================================================================
+
+
+## ==========================================================================
+#   starts server as daemon
+## ==========================================================================
+
+
+start() {
+    echo -n "Starting ntpd-setwait with ntpd: ${NTPD_BIN}... "
+
+    /sbin/start-stop-daemon --make-pidfile --pidfile "${PID_FILE}" \
+        --start --background --name ntpd-setwait --stderr ${PROGRAM_LOG} \
+        --exec ${command} -- -f ${MAX_DEVIATION} ${NTPD_BIN} ${NTPD_OPTS}
+
+    if [ "$?" -ne "0" ] ; then
+        echo "error"
+        exit 1
+    fi
+
+    echo "ok"
+}
+
+
+## ==========================================================================
+#   stops the server but lets it finish any job it currently performs.  If
+#   stop gets called twice, server will abandon any job and will exit asap
+## ==========================================================================
+
+
+stop() {
+    echo -n "Stopping ntpd... "
+    if /bin/kill -15 $(cat "${PID_FILE}") > /dev/null 2>&1; then
+        echo "ok"
+        return 0
+    fi
+
+    echo "already stopped"
+}
+
+
+## ==========================================================================
+#                                __                __
+#                         _____ / /_ ____ _ _____ / /_
+#                        / ___// __// __ `// ___// __/
+#                       (__  )/ /_ / /_/ // /   / /_
+#                      /____/ \__/ \__,_//_/    \__/
+#
+## ==========================================================================
+
+
+case "$1" in
+    "start")
+        start
+        ;;
+
+    "stop")
+        stop
+        ;;
+
+    "restart")
+        stop
+        start
+        ;;
+
+    "status")
+        if [ ! -f "${PID_FILE}" ] ; then
+            # file doesn't exist, server wasn't started yet, or it was closed
+            # and server removed pid file
+            echo "ntpd is not running"
+            exit 1
+        fi
+
+        if [ $(/usr/bin/stat -c %s "${PID_FILE}") -eq 0 ] ; then
+            # file exists but its size is 0, meaning server started and ended
+            # but couldn't remove pid, so it truncated it to 0 bytes size
+            echo "ntpd is not running"
+            exit 1
+        fi
+
+        if /bin/ps -p $(cat "${PID_FILE}") > /dev/null 2>&1 ; then
+            # process exists and is alive
+            echo "ntpd is running"
+            exit 0
+        fi
+
+        # information about pid exists in pid file, but process is not running
+        # that means server exited in non-clean way and didn't clean pid file
+        echo "ntpd crashed"
+        exit 2
+        ;;
+    *)
+        echo -e "usage: $0 {start|stop|status|restart}"
+        echo -e ""
+        echo -e "exit codes"
+        echo -e "\tstart"
+        echo -e "\t\t0\tstarted with success"
+        echo -e "\t\t1\terror starting ntpd"
+        echo -e ""
+        echo -e "\tstop"
+        echo -e "\t\t0\tntpd stopped with success"
+        echo -e "\t\t1\tcouldn't stop ntpd (already stopped or crashed)"
+        echo -e ""
+        echo -e "\tstatus"
+        echo -e "\t\t0\tntpd is running"
+        echo -e "\t\t1\tntpd is not running"
+        echo -e "\t\t2\tntpd crashed"
+        echo -e ""
+        echo -e "\trestart"
+        echo -e "\t\t0\tntpd restarted"
+        echo -e "\t\t1\terror restarting ntpd"
+esac

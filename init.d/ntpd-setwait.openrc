@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+
+MAX_DEVIATION=${MAX_DEVIATION:="300"}
+NTPD_BIN=${NTPD_BIN:="/usr/sbin/ntpd"}
+NTPD_OPTS=${NTPD_OPTS:=""}
+PID_FILE=${PID_FILE:="/var/run/ntpd.pid"}
+PROGRAM_LOG=${PROGRAM_LOG:="/var/log/ntpd-setwait.log"}
+
+command=/usr/bin/ntpd-setwait
+
+depend() {
+    need net
+}
+
+start() {
+    ebegin "Starting ntpd-setwait with ntpd: ${NTPD_BIN}"
+
+    /sbin/start-stop-daemon --make-pidfile --pidfile "${PID_FILE}" \
+        --start --background --name ntpd-setwait --stderr ${PROGRAM_LOG} \
+        --exec ${command} -- -f ${MAX_DEVIATION} ${NTPD_BIN} ${NTPD_OPTS}
+
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping ntpd"
+    /sbin/start-stop-daemon --stop --signal 15 --pidfile "${PID_FILE}"
+    eend $?
+}
