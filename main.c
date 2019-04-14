@@ -376,11 +376,13 @@ int main
          */
 
         while (get_ts_from_ntp(&ntp_ts) != 0);
+        fprintf(stderr, "n/ntp time is: %s", ctime(&ntp_ts));
 
         /* what is localtime now?
          */
 
         local_ts = time(NULL);
+        fprintf(stderr, "n/localtime is: %s", ctime(&local_ts));
 
         /* calculate absolute deviation between localtime and
          * current time from ntp
@@ -403,6 +405,9 @@ int main
              * jump
              */
 
+            fprintf(stderr, "n/time deviation is bigger than %d (%ld), "
+                    "setting system time from ntp\n", max_deviation,
+                    (long)diff_ts);
             tv.tv_sec = ntp_ts;
             tv.tv_usec = 0;
 
@@ -414,6 +419,9 @@ int main
                 perror("w/settimeofday()");
                 continue;
             }
+
+            local_ts = time(NULL);
+            fprintf(stderr, "n/updated localtime is: %s", ctime(&local_ts));
         }
 
         if (daemonise)
@@ -435,6 +443,7 @@ int main
          * and after that are arguments for ntpd itself.
          */
 
-        execve(argv[2], &argv[2], envp);
+        fprintf(stderr, "n/executing ntpd: %s\n", argv[3]);
+        execve(argv[3], &argv[3], envp);
     }
 }
