@@ -12,7 +12,6 @@
 
 
 #include <errno.h>
-#include <inttypes.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +65,7 @@ static int get_ts_from_ntp
     time_t           *ts        /* current timestamp will be stored here */
 )
 {
-    uint32_t          ts_s;     /* received transmit time from ntp */
+    unsigned long     ts_s;     /* received transmit time from ntp */
     int               fd;       /* file descriptor used to talk with ntp */
     int               ret;      /* return value from various funcitons */
     struct addrinfo   hints;    /* criteria for selecting sockaddr struct */
@@ -225,10 +224,10 @@ static int get_ts_from_ntp
      */
 
     ts_s = 0;
-    ts_s |= packet[NTP_TRANS_TS_S_OFFSET + 0] << 24;
-    ts_s |= packet[NTP_TRANS_TS_S_OFFSET + 1] << 16;
-    ts_s |= packet[NTP_TRANS_TS_S_OFFSET + 2] << 8;
-    ts_s |= packet[NTP_TRANS_TS_S_OFFSET + 3];
+    ts_s += (unsigned long)packet[NTP_TRANS_TS_S_OFFSET + 0] << 24;
+    ts_s += (unsigned long)packet[NTP_TRANS_TS_S_OFFSET + 1] << 16;
+    ts_s += (unsigned long)packet[NTP_TRANS_TS_S_OFFSET + 2] << 8;
+    ts_s += (unsigned long)packet[NTP_TRANS_TS_S_OFFSET + 3];
 
     /* ntp sends time with epoch set to 01.01.1900, and unix time
      * has epoch set to 01.01.1970, so we subtract 70 years from
@@ -236,7 +235,7 @@ static int get_ts_from_ntp
      * (Time Protocol) is 2208988800 seconds.
      */
 
-    ts_s -= 2208988800l;
+    ts_s -= 2208988800ul;
     *ts = ts_s;
 
     freeaddrinfo(res);
