@@ -2,10 +2,9 @@ AC_INIT([ntpd-setwait], [0.1.0], [michal.lyszczek@bofc.pl])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([ntpd-setwait-config.h])
-AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_CC
 AC_CANONICAL_HOST
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile www/Makefile])
 
 
 ###

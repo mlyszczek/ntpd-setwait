@@ -1,0 +1,7 @@
+in_title="ntpd-setwait.kurwinet.pl - program to set system time from ntp before running ntpd daemon"
+in_description="program to set system time from ntp before running ntpd daemon"
+in_keywords="c, ntp, ntpd, ntpd-wait, ntpd-setwait"
+in_author="Michał Łyszczek"
+in_lang="en"
+in_pygment=vim
+in_style=man

@@ -1,4 +1,4 @@
-ACLOCAL_AMFLAGS=-I m4
+SUBDIRS = www
 
 EXTRA_DIST = readme.md init.d/ntpd-setwait.conf init.d/ntpd-setwait.openrc
 
@@ -26,4 +26,9 @@ analyze: $(analyze_plists)
 
 endif # ENABLE_ANALYZER
 
-.PHONY: analyze
+www:
+	./gen-download-page.sh
+	./man2html.sh
+	make www -C www
+
+.PHONY: analyze www
