@@ -1,4 +1,6 @@
 *.swp
+*~
+/ntpd-setwait*.tar.gz
 /.deps
 /Makefile
 /Makefile.in
