@@ -10,6 +10,7 @@ command=/usr/bin/ntpd-setwait
 
 depend() {
     need net
+    provide ntpd
 }
 
 start() {
