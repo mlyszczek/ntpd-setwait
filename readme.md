@@ -67,6 +67,6 @@ See also
 
 * [git repository][3] to browse sources online
 
-[1]: https://ntpd-setwait.kurwinet.pl/manuals/ntpd-setwait.1.html
+[1]: https://ntpd-setwait.bofc.pl/manuals/ntpd-setwait.1.html
 [2]: mailto:michal.lyszczek@bofc.pl
-[3]: https://git.kurwinet.pl/ntpd-setwait
+[3]: https://git.bofc.pl/ntpd-setwait
