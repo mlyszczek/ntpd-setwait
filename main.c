@@ -71,6 +71,30 @@
    ========================================================================== */
 
 
+void error
+(
+    const char         *msg        /* message to print */
+)
+{
+    time_t              now;       /* current time */
+    static time_t       last_log;  /* last time when message was printed */
+    static const char  *last_msg;  /* last log that was printed */
+    /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+    now = time(NULL);
+
+    /* if we are printing same message twice,
+     * and 60 seconds did not pass from last
+     * print, then do not print this log */
+    if (msg == last_msg && (now - last_log) < 10)
+        return;
+
+    perror(msg);
+    last_msg = msg;
+    last_log = now;
+    return;
+}
+
 /* ==========================================================================
     Reads current timestamp from random ntp server. As a source, we use time
     at which ntp packet left server to us.
@@ -137,8 +161,7 @@ static int get_ts_from_ntp
              */
 
             errcnt = 60;
-            fprintf(stderr, "w/getaddrinfo(%s, 123): %s\n", host,
-                    strerror(errno));
+            error("w/getaddrinfo()");
         }
 
         return -1;
@@ -171,7 +194,7 @@ static int get_ts_from_ntp
          * create socket.
          */
 
-        perror("w/no available address found");
+        error("w/no available address found");
         freeaddrinfo(res);
         return -1;
     }
@@ -187,7 +210,7 @@ static int get_ts_from_ntp
         /* couldn't send whole packet
          */
 
-        perror("w/sendto() ntp request");
+        error("w/sendto() ntp request");
         freeaddrinfo(res);
         close(fd);
         return -1;
@@ -215,7 +238,7 @@ static int get_ts_from_ntp
         /* select() failed in a bad way
          */
 
-        perror("w/select()");
+        error("w/select()");
         freeaddrinfo(res);
         close(fd);
         return -1;
@@ -241,7 +264,7 @@ static int get_ts_from_ntp
         /* couldn't receive whole packet
          */
 
-        perror("w/read() ntp response");
+        error("w/read() ntp response");
         freeaddrinfo(res);
         close(fd);
         return -1;
@@ -442,7 +465,7 @@ int main
                 /* couldn't set the time, go back to start
                  */
 
-                perror("w/settimeofday()");
+                error("w/settimeofday()");
                 continue;
             }
 
