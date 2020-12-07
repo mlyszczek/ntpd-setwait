@@ -84,7 +84,8 @@
 
 static int get_ts_from_ntp
 (
-    time_t           *ts        /* current timestamp will be stored here */
+    time_t           *ts,       /* current timestamp will be stored here */
+    const char       *ip        /* custom ntp ip */
 )
 {
     unsigned long     ts_s;     /* received transmit time from ntp */
@@ -97,12 +98,17 @@ static int get_ts_from_ntp
     fd_set            readfds;  /* list of sockets to monitor */
     struct timeval    tv;       /* sleep timeout for select() */
     static int        errcnt;   /* getaddrinfo() error counter */
+    const char       *host;     /* ntp server host */
     unsigned char     packet[NTP_PACKET_LEN];  /* received packet from ntp */
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 
     memset(packet, 0x00, sizeof(packet));
     memset(&hints, 0x00, sizeof(hints));
+
+    /* use pool.ntp.org unless user specified custom host/ip */
+    host = "pool.ntp.org";
+    if (ip[0] != '\0')  host = ip;
 
     /* set: li (leap indicator) - 3 (clock is unsynchronized)
      *      ntp version - 4
@@ -113,10 +119,12 @@ static int get_ts_from_ntp
 
     /* find ip address of 'pool.ntp.org' domain that gives
      * random ip of ntp server
+     *
+     * if custom ip has been specified, use that ip instead
      */
 
     hints.ai_socktype = SOCK_DGRAM;
-    if (getaddrinfo("pool.ntp.org", "123", &hints, &res) < 0)
+    if (getaddrinfo(host, "123", &hints, &res) < 0)
     {
         /* faild to get address, might be that network is down
          */
@@ -129,7 +137,8 @@ static int get_ts_from_ntp
              */
 
             errcnt = 60;
-            perror("w/getaddrinfo(pool.ntp.org,123)");
+            fprintf(stderr, "w/getaddrinfo(%s, 123): %s\n", host,
+                    strerror(errno));
         }
 
         return -1;
@@ -276,11 +285,12 @@ static void print_help
     const char  *name  /* name of program (argv[0]) */
 )
 {
-    fprintf(stderr, "usage: %s <-f|-d> <max-deviation> <ntpd-bin> "
-            "[<ntpd-opts>]\n\n", name);
+    fprintf(stderr, "usage: %s [-f] [-i<ip>] <max-deviation> "
+            "<ntpd-bin> [<ntpd-opts>]\n\n", name);
 
+    fprintf(stderr, "all arguments are positional\n\n");
     fprintf(stderr, "-f     run in foreground\n");
-    fprintf(stderr, "-d     run as daemon in backgroud\n\n");
+    fprintf(stderr, "-i<ip> specify custom ip for ntp\n\n");
 
     fprintf(stderr, "when deviation between localtime and time read\n");
     fprintf(stderr, "from ntp is bigger than this value \n");
@@ -311,79 +321,63 @@ int main
 {
     int     daemonise;          /* to run as daemon or not */
     int     max_deviation;      /* max deviation of time to set system time */
+    int     optind;             /* current argument being parsed */
     time_t  ntp_ts;             /* ntp server timestamp */
     time_t  local_ts;           /* local timestamp */
     time_t  diff_ts;            /* differance between ntp and localtime */
+    char    ip[15 + 1];         /* custom ntp ip address */
     char   *envp[] = { NULL };  /* environment for ntpd process */
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 
-    /* parse first argument, which should be -f, -d or -h for help
-     */
+    ip[0] = '\0';
+    optind = 1;
+    daemonise = 1;
 
-    if (argc < 2)
+    while (argv[optind] && argv[optind][0] == '-')
     {
-        fprintf(stderr, "should I run as daemon (-d) or foreground (-f)?\n");
-        print_help(argv[0]);
-        return 1;
+        switch (argv[optind][1])
+        {
+        case 'h':
+            print_help(argv[0]);
+            return 0;
+
+        case 'f':
+            daemonise = 0;
+            break;
+
+        case 'i':
+            strncpy(ip, &argv[optind][2], sizeof(ip));
+            ip[sizeof(ip) - 1] = '\0';
+            break;
+        }
+        optind++;
     }
 
-    if (argv[1][0] != '-')
-    {
-        fprintf(stderr, "should I run as daemon (-d) or foreground (-f)?\n");
-        print_help(argv[0]);
-        return 1;
-    }
-
-    switch (argv[1][1])
-    {
-    case 'h':
-        print_help(argv[0]);
-        return 0;
-
-    case 'd':
-        daemonise = 1;
-        break;
-
-    case 'f':
-        daemonise = 0;
-        break;
-
-    default:
-        fprintf(stderr, "should I run as daemon (-d) or foreground (-f)?\n");
-        print_help(argv[0]);
-        return 1;
-    }
-
-    /* parse second argument, which should be max deviation in seconds
-     */
-
-    if (argc < 3)
+    /* parse next argument, which should be max deviation in seconds */
+    if (argv[optind] == NULL)
     {
         fprintf(stderr, "missing max deviation argument\n");
         print_help(argv[0]);
         return 1;
     }
 
-    max_deviation = atoi(argv[2]);
+    max_deviation = atoi(argv[optind]);
+    optind++;
 
-    /* now we expect 3rd argument which is path to ntpd binary
-     */
-
-    if (argc < 4)
+    /* now we expect argument which is path to ntpd binary */
+    if (argv[optind] == NULL)
     {
         fprintf(stderr, "missing path to ntpd\n");
         print_help(argv[0]);
         return 1;
     }
 
-    /* check if ntpd binary exists and we can execute it
-     */
-
-    if (access(argv[3], R_OK | X_OK) != 0)
+    /* check if ntpd binary exists and we can execute it */
+    if (access(argv[optind], R_OK | X_OK) != 0)
     {
         fprintf(stderr, "cannot access ntpd binary: %s: %s\n",
-                argv[3], strerror(errno));
+                argv[optind], strerror(errno));
         return 1;
     }
 
@@ -407,7 +401,7 @@ int main
          * ntp server
          */
 
-        while (get_ts_from_ntp(&ntp_ts) != 0);
+        while (get_ts_from_ntp(&ntp_ts, ip) != 0);
         fprintf(stderr, "n/ntp time is: %s", ctime(&ntp_ts));
 
         /* what is localtime now?
@@ -469,13 +463,13 @@ int main
          * care, we start ntpd now and let it worry about that,
          * ntpd will sync us to valid time, nice and slow.
          *
-         * argv[3] contains path to ntpd to run
+         * argv[optind] contains path to ntpd to run
          *
-         * &argv[3] contains name (argv[0]) for new process
+         * &argv[optind] contains name (argv[0]) for new process
          * and after that are arguments for ntpd itself.
          */
 
-        fprintf(stderr, "n/executing ntpd: %s\n", argv[3]);
-        execve(argv[3], &argv[3], envp);
+        fprintf(stderr, "n/executing ntpd: %s\n", argv[optind]);
+        execve(argv[optind], &argv[optind], envp);
     }
 }
