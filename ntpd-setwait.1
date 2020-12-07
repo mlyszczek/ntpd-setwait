@@ -6,10 +6,11 @@
 .SH SYNOPSIS
 .PP
 .B ntpd-setwait
-.RB < -f | -d >
+.RB [ -f ]
+.RB [ -i<ip> ]
 .RB < max-deviation >
 .RB < ntpd-bin >
-.RB [< ntpd-opts >]
+.RB [ ntpd-opts ]
 .SH DESCRIPTION
 .PP
 .B ntpd-setwait
@@ -39,6 +40,8 @@ syscall, so after that
 cease to exist.
 .SH OPTIONS
 .PP
+All options are positional.
+.PP
 .TP
 .B -f
 Run program in foreground - this may be usefull when you want to stop system
@@ -54,13 +57,13 @@ pid will be the same as
 due to
 .BR execve ()
 function.
+By default, program forks into background.
 .TP
-.B -d
-Fork program into background.
-This is usefull when you want time to be synchronized, but you don't really
-care if this happens now or after couple of hours when internet shows up.
-Just make sure your programs are resistant to immediate jump from past to
-the present.
+.B -i
+By default, programs takes ntp server from pool.ntp.org, but if you want
+to specify own server (on local network) you can do it by passing -i
+argument. Usefull when your board does not really have internet access,
+but it can access internal server with ntpd server.
 .TP
 .RB < max-deviation >
 Positional argument.
