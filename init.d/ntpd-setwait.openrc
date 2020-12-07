@@ -6,6 +6,11 @@ NTPD_OPTS=${NTPD_OPTS:=""}
 PID_FILE=${PID_FILE:="/var/run/ntpd.pid"}
 PROGRAM_LOG=${PROGRAM_LOG:="/var/log/ntpd-setwait.log"}
 
+host=
+if [ "${NTP_HOST}" ]; then
+    host="-i${NTP_HOST}"
+fi
+
 command=/usr/bin/ntpd-setwait
 
 depend() {
@@ -18,7 +23,7 @@ start() {
 
     /sbin/start-stop-daemon --make-pidfile --pidfile "${PID_FILE}" \
         --start --background --name ntpd-setwait --stderr ${PROGRAM_LOG} \
-        --exec ${command} -- -f ${MAX_DEVIATION} ${NTPD_BIN} ${NTPD_OPTS}
+        --exec ${command} -- -f ${host} ${MAX_DEVIATION} ${NTPD_BIN} ${NTPD_OPTS}
 
     eend $?
 }
