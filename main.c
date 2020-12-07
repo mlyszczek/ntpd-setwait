@@ -421,10 +421,12 @@ int main
     for (;;)
     {
         /* probe for ntp time until we receive valid timestamp from
-         * ntp server
+         * ntp server, do not probe more often than once every 100ms,
+         * to not hog CPU in case network is no available at all,
+         * and get_ts_from_ntp() returns in an instant
          */
 
-        while (get_ts_from_ntp(&ntp_ts, ip) != 0);
+        while (get_ts_from_ntp(&ntp_ts, ip) != 0) usleep(100 * 1000ul);
         fprintf(stderr, "n/ntp time is: %s", ctime(&ntp_ts));
 
         /* what is localtime now?
